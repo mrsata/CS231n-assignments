@@ -77,7 +77,8 @@ def svm_loss_vectorized(W, X, y, reg):
   num_classes = W.shape[1]
   num_train = X.shape[0]
   scores = X.dot(W)
-  margins = np.maximum(0, scores - np.reshape(scores[np.arange(num_train), y], (num_train, 1)) + delta)
+  margins = np.maximum(0, scores - np.reshape(scores[np.arange(num_train), y],
+                                              (num_train, 1)) + delta)
   margins[np.arange(num_train), y] = np.zeros(y.shape)
   loss = np.sum(margins)
   #############################################################################
@@ -108,7 +109,7 @@ def svm_loss_vectorized(W, X, y, reg):
   dW /= num_train
 
   # Add regularization to the loss.
-  loss += reg * np.sum(W * W)
+  loss += reg * W
   dW += reg * W
 
   return loss, dW
