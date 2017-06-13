@@ -94,16 +94,11 @@ class TwoLayerNet(object):
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
-
-    f = scores
-    f -= np.reshape(f[range(N), np.argmax(f, axis=1)], (N, 1))
+    f = scores.copy()
+    f -= np.max(f, axis=1, keepdims=True)
     p = np.exp(f) / np.sum(np.exp(f), axis=1, keepdims=True)
-    loss = np.sum(- np.log(p[range(N), y]))
-    loss /= N
-
-    # Add regularization to the loss.
+    loss = np.sum(- np.log(p[range(N), y])) / N
     loss += reg * (np.sum(W1 * W1) + np.sum(W2 * W2))
-
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -115,7 +110,7 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    dscores = p
+    dscores = p.copy()
     dscores[np.arange(N), y] -= 1
     dscores /= N
     dW2 = h1.T.dot(dscores)
@@ -126,7 +121,6 @@ class TwoLayerNet(object):
     dW1 = X.T.dot(dh1)
     dW1 += reg * W1
     db1 = np.sum(dh1, axis = 0)
-
     grads['W1'] = dW1
     grads['W2'] = dW2
     grads['b1'] = db1
