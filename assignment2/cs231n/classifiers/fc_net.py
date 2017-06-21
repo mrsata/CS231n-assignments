@@ -244,7 +244,7 @@ class FullyConnectedNet(object):
         reg, layers = self.reg, self.num_layers
         W, b = {int(k[1]):v for k, v in self.params.items() if k[0] == 'W'}, {int(k[1]):v for k, v in self.params.items() if k[0] == 'b' and k[1] != 'e'}
         outs, caches = {-1: X}, {}
-        h, bn, caches_h, caches_bn = {}, {}, {}, {}
+        h, bn, caches_h, caches_bn, caches_do = {}, {}, {}, {}, {}
         for i in range(layers - 1):
             if self.use_batchnorm:
                 gamma, beta = self.params['gamma{}'.format(i + 1)], self.params['beta{}'.format(i + 1)]
@@ -253,6 +253,8 @@ class FullyConnectedNet(object):
                 outs[i], caches[i] = relu_forward(bn[i])
             else:
                 outs[i], caches[i] = affine_relu_forward(outs[i - 1], W[i + 1], b[i + 1])
+            if self.use_dropout:
+                outs[i], caches_do[i] = dropout_forward(outs[i], self.dropout_param)
         scores, cache = affine_forward(outs[layers - 2], W[layers], b[layers])
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -281,6 +283,8 @@ class FullyConnectedNet(object):
         douts, dW, db = {}, {}, {}
         douts[layers - 1], dW[layers], db[layers] = affine_backward(dscores, cache)
         for i in range(1, layers):
+            if self.use_dropout:
+                douts[layers - i] = dropout_backward(douts[layers - i], caches_do[layers - i - 1])
             if self.use_batchnorm:
                 dh, dbn = {}, {}
                 dbn[layers - i - 1] = relu_backward(douts[layers - i], caches[layers - i - 1])
