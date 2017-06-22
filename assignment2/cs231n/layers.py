@@ -380,7 +380,17 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    stride, pad = conv_param['stride'], conv_param['pad']
+    Hout = int(1 + (H + 2 * pad - HH) / stride)
+    Wout = int(1 + (W + 2 * pad - WW) / stride)
+    x_pad = np.pad(x, ((0,), (0,), (pad,), (pad,)), 'constant', constant_values=0)
+    out = np.zeros((N, F, Hout, Wout))
+    for i in range(Hout):
+        for j in range(Wout):
+            mask = x_pad[:, :, i * stride:i * stride + HH, j * stride:j * stride + WW]
+            out[:, :, i, j] = mask.reshape(N, -1).dot(w.reshape(F, -1).T) + b
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -405,7 +415,25 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    x, w, b, conv_param = cache
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    stride, pad = conv_param['stride'], conv_param['pad']
+    Hout = int(1 + (H + 2 * pad - HH) / stride)
+    Wout = int(1 + (W + 2 * pad - WW) / stride)
+    x_pad = np.pad(x, ((0,), (0,), (pad,), (pad,)), 'constant', constant_values=0)
+    db = np.sum(dout, axis=(0, 2, 3))
+    dmask = np.zeros((N, C, HH, WW))
+    dx_pad = np.zeros(x_pad.shape)
+    dw = np.zeros(w.shape)
+    dx = np.zeros(x.shape)
+    for i in range(Hout):
+        for j in range(Wout):
+            mask = x_pad[:, :, i * stride:i * stride + HH, j * stride:j * stride + WW]
+            dw += mask.reshape(N, -1).T.dot(dout[:, :, i, j]).T.reshape(w.shape)
+            dmask = dout[:, :, i, j].dot(w.reshape(F, -1)).reshape(mask.shape)
+            dx_pad[:, :, i * stride:i * stride + HH, j * stride:j * stride + WW] += dmask
+    dx = dx_pad[:, :, pad:-pad, pad:-pad]
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
