@@ -459,7 +459,15 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # TODO: Implement the max pooling forward pass                            #
     ###########################################################################
-    pass
+    N, C, H, W = x.shape
+    pool_height, pool_width, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    Hout = int(1 + (H - pool_height) / stride)
+    Wout = int(1 + (W - pool_width) / stride)
+    out = np.zeros((N, C, Hout, Wout))
+    for i in range(Hout):
+        for j in range(Wout):
+            mask = x[:, :, i * stride:i * stride + pool_height, j * stride:j * stride + pool_width]
+            out[:, :, i, j] = np.max(mask, axis=(2,3))
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -482,7 +490,21 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the max pooling backward pass                           #
     ###########################################################################
-    pass
+    x, pool_param = cache
+    N, C, H, W = x.shape
+    pool_height, pool_width, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    Hout = int(1 + (H - pool_height) / stride)
+    Wout = int(1 + (W - pool_width) / stride)
+    dx = np.zeros(x.shape)
+    for i in range(Hout):
+        for j in range(Wout):
+            mask = x[:, :, i * stride:i * stride + pool_height, j * stride:j *
+                stride + pool_width]
+            mask_max = np.max(mask, axis=(2, 3))
+            dmask = (mask == mask_max[:, :, None, None]) * (
+                dout[:, :, i, j])[:, :, None, None]
+            dx[:, :, i * stride:i * stride + pool_height, j * stride:j *
+                stride + pool_width] += dmask
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
